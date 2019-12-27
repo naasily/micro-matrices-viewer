@@ -3,7 +3,33 @@ from tkinter import Menu
 from tkinter import filedialog
 import csv
 from PIL import ImageTk, Image
+import cv2
+import numpy as np
 
+
+def calculate_heat_map_color(value, max, min):
+    green_pixel_value = 0
+    red_pixel_value = 0
+
+    #range = max - min
+    position = (value - min) / (max - min)
+    pixel_positon = position * 510
+    #red_pixel_value = 255 - pixel_positon
+    if pixel_positon > 255:
+        green_pixel_value = pixel_positon - 255
+    elif pixel_positon < 255:
+        red_pixel_value = pixel_positon
+    #print("value", value, "max", max, "min", min,"pixel values", int(red_pixel_value), " ", int(green_pixel_value))
+    return int(red_pixel_value), int(green_pixel_value), 0
+
+    # 0 - 100
+    # 40
+    # 40 / 100 = 0.4
+    # 510 * 0.4 = 204
+
+# 510
+# 255, 0, 0 - red
+# 0, 255, 0 - green
 
 def clicked():
     file = filedialog.askopenfilename()
@@ -14,17 +40,24 @@ def clicked():
         probes = lines[0]
         classes = lines[1]
 
-        image_width = len(probes)
-        image_height = len(lines)
+        image_width = len(classes) - 1
+        image_height = len(lines) - 2
+        img = np.zeros((image_height, image_width, 3), np.uint8)
+        #img = Image.new('RGB', (image_width, image_height), "black")
+        #pixels = img.load()
+        #print(img.size)
+        #print(img.shape)
+        for i in range(2, image_height):
+            row = lines[i]
+            del row[0]
+            for j in range(1, image_width):
+                row = list(map(float, row))
+                img[i, j] = calculate_heat_map_color(row[j], max(row), min(row))
 
-        img = Image.new('RGB', (image_width, image_height), "black")
-        pixels = img.load()
-        for i in range(img.size[0]):
-            for j in range(img.size[1]):
-                pixels[i, j] = (i % 255, j % 255, 100)
-
-        img = img.resize((image_width * 10, image_height * 10))
-        image = ImageTk.PhotoImage(img)
+        resized = cv2.resize(img, (image_width * 10, image_height * 10), interpolation=cv2.INTER_AREA)
+        #img = img.resize((image_width * 10, image_height * 10))
+        image = Image.fromarray(resized)
+        image = ImageTk.PhotoImage(image)
         label = Label(frame, image=image)
         label.pack(side="bottom", fill="both", expand="yes")
         label.image = image
