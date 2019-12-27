@@ -5,6 +5,7 @@ import csv
 from PIL import ImageTk, Image
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def calculate_heat_map_color(value, max, min):
@@ -57,10 +58,19 @@ def clicked():
         resized = cv2.resize(img, (image_width * 10, image_height * 10), interpolation=cv2.INTER_AREA)
         #img = img.resize((image_width * 10, image_height * 10))
         image = Image.fromarray(resized)
-        image = ImageTk.PhotoImage(image)
+        window.image = image = ImageTk.PhotoImage(image)
+        #image.save('image3.png')
+        # cv2.imwrite('image2.png', resized)
         label = Label(frame, image=image)
         label.pack(side="bottom", fill="both", expand="yes")
         label.image = image
+        # canvas.delete("IMG")
+        # canvas.create_image((0, 0), image=image, anchor=NW, tags="IMG")
+        # # canvas.pack()
+        # # canvas.update()
+        # canvas.update_idletasks()
+        # frame.update_idletasks()
+        # window.update_idletasks()
 
 
 def on_frame_configured(canvas):
@@ -73,10 +83,10 @@ window.geometry('500x500')
 
 canvas = Canvas(window, borderwidth=0, background="#ffffff")
 frame = Frame(canvas, background="#ffffff")
-vsb = Scrollbar(window, orient="vertical", command=canvas.yview)
-canvas.configure(yscrollcommand=vsb.set)
+scroll_bar = Scrollbar(window, orient="vertical", command=canvas.yview)
+canvas.configure(yscrollcommand=scroll_bar.set)
 
-vsb.pack(side="right", fill="y")
+scroll_bar.pack(side="right", fill="both")
 canvas.pack(side="top", fill="both", expand=True)
 canvas.create_window((4,4), window=frame, anchor="nw")
 
@@ -87,6 +97,15 @@ menu = Menu(frame)
 choose_file = Menu(menu, tearoff=0)
 choose_file.add_command(label='Choose file', command=clicked)
 menu.add_cascade(label='File', menu=choose_file)
+
+# window.image = image = ImageTk.PhotoImage('image3.png')
+# label = Label(frame, image=image)
+# label.pack(side="bottom", fill="both", expand="yes")
+# label.image = image
+
+# img = plt.imread('image3.png')
+# plt.imshow(img)
+# plt.show()
 
 window.config(menu=menu)
 window.mainloop()
