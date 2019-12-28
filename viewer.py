@@ -10,6 +10,8 @@ import math
 
 matrix = np.zeros((2, 2, 3), np.uint8)
 multiplication_factor = 10
+canvas_horizontal_line_id = 0
+canvas_vertical_line_id = 0
 
 
 def calculate_heat_map_color(value, left_range, right_range):
@@ -26,17 +28,27 @@ def calculate_heat_map_color(value, left_range, right_range):
 
 
 def mouse_click(event):
+    global canvas_horizontal_line_id
+    global canvas_vertical_line_id
     x_index = math.ceil(event.x / multiplication_factor)
     y_index = math.ceil(event.y / multiplication_factor)
     probe_label.configure(text="Current clicked probe: " + matrix[0][x_index])
     genome_label.configure(text="Current clicked genome: " + matrix[y_index][0])
+
+    # todo how much image is scrolled, or get pixel click
+    canvas.after(1, canvas.delete, canvas_horizontal_line_id)
+    canvas.after(1, canvas.delete, canvas_vertical_line_id)
+    canvas_horizontal_line_id = canvas.create_line(0, event.y, (len(matrix[0]) - 1) * multiplication_factor,
+                                                   event.y, fill="red")
+    canvas_vertical_line_id = canvas.create_line(event.x, 0, event.x, (len(matrix) - 2) * multiplication_factor,
+                                                 fill="red")
 
 
 def pack_labels():
     probe_label.pack(padx=(10, 0), pady=(10, 0))
     genome_label.pack(padx=(10, 0), pady=(10, 0))
     class_label.pack(anchor="nw")
-    image_label.pack(side="bottom", fill="both", expand="yes", pady=(10, 0))
+    image_label.pack(side="top", fill="both", expand="yes", pady=(10, 0))
 
 
 def create_classes_label(classes):
@@ -57,7 +69,7 @@ def create_classes_label(classes):
     class_label.configure(image=classes_image)
 
 
-def clicked():
+def load_file():
     global matrix
     file = filedialog.askopenfilename()
 
@@ -83,10 +95,8 @@ def clicked():
         image = Image.fromarray(resized)
         window.image = image = ImageTk.PhotoImage(image)
 
-        image_label.configure(image=image)
-        image_label.bind("<Button>", mouse_click)
-        image_label.image = image
-
+        canvas.create_image(image.width(), image.height(), image=image, anchor="se")
+        canvas.bind("<Button>", mouse_click)
         create_classes_label(list(matrix[1]))
         pack_labels()
 
@@ -116,7 +126,7 @@ image_label = Label(image_frame)
 
 menu = Menu(image_frame)
 choose_file = Menu(menu, tearoff=0)
-choose_file.add_command(label='Load', command=clicked)
+choose_file.add_command(label='Load', command=load_file)
 menu.add_cascade(label='File', menu=choose_file)
 
 window.config(menu=menu)
