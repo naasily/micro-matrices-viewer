@@ -33,9 +33,28 @@ def mouse_click(event):
 
 
 def pack_labels():
-    probe_label.pack(anchor="nw", padx=(10, 0), pady=(10, 0))
-    genome_label.pack(anchor="nw", padx=(10, 0), pady=(10, 0))
+    probe_label.pack(padx=(10, 0), pady=(10, 0))
+    genome_label.pack(padx=(10, 0), pady=(10, 0))
+    class_label.pack(anchor="nw")
     image_label.pack(side="bottom", fill="both", expand="yes", pady=(10, 0))
+
+
+def create_classes_label(classes):
+    del classes[0]
+    img = np.zeros((1, len(classes), 3), np.uint8)
+    for idx, c in enumerate(classes):
+        if c == '1':
+            img[0][idx] = (255, 0, 0)
+        if c == '2':
+            img[0][idx] = (0, 255, 0)
+        if c == '3':
+            img[0][idx] = (0, 0, 255)
+
+    img = cv2.resize(img, (img.shape[1] * multiplication_factor, img.shape[0] * multiplication_factor),
+                     interpolation=cv2.INTER_AREA)
+    image = Image.fromarray(img)
+    window.classes_image = classes_image = ImageTk.PhotoImage(image)
+    class_label.configure(image=classes_image)
 
 
 def clicked():
@@ -47,7 +66,7 @@ def clicked():
         matrix = list(reader)
         image_width = len(matrix[0]) - 1
         image_height = len(matrix) - 2
-        img = np.zeros((image_height, image_width, 3), np.uint8)
+        img = np.zeros((image_height - 2, image_width - 1, 3), np.uint8)
         for i in range(2, image_height):
             row = list(matrix[i])
             del row[0]
@@ -67,6 +86,8 @@ def clicked():
         image_label.configure(image=image)
         image_label.bind("<Button>", mouse_click)
         image_label.image = image
+
+        create_classes_label(list(matrix[1]))
         pack_labels()
 
 
@@ -78,18 +99,19 @@ canvas = Canvas(window, borderwidth=0, background="#ffffff")
 image_frame = Frame(canvas, background="#ffffff")
 
 info_frame = Frame(window)
-info_frame.pack()
+info_frame.pack(anchor="nw")
 
 scroll_bar = Scrollbar(window, orient="vertical", command=canvas.yview)
 canvas.configure(yscrollcommand=scroll_bar.set)
 
 scroll_bar.pack(side="right", fill="both")
 canvas.pack(side="top", fill="both", expand=True)
-canvas.create_window((0,0), window=image_frame, anchor="nw")
+canvas.create_window((0, 0), window=image_frame, anchor="nw")
 
 image_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 probe_label = Label(info_frame, text="Current clicked probe: ")
 genome_label = Label(info_frame, text="Current clicked genome: ")
+class_label = Label(info_frame)
 image_label = Label(image_frame)
 
 menu = Menu(image_frame)
