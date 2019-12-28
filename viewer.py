@@ -6,6 +6,10 @@ from PIL import ImageTk, Image
 import cv2
 import numpy as np
 import statistics as stat
+import math
+
+matrix = np.zeros((2, 2, 3), np.uint8)
+multiplication_factor = 10
 
 
 def calculate_heat_map_color(value, left_range, right_range):
@@ -21,20 +25,25 @@ def calculate_heat_map_color(value, left_range, right_range):
     return int(red_pixel_value), int(green_pixel_value), 0
 
 
+def mouse_click(event):
+    x_index = math.ceil(event.x / multiplication_factor)
+    y_index = math.ceil(event.y / multiplication_factor)
+    probe_label.configure(text="Current clicked probe " + matrix[0][x_index])
+    genome_label.configure(text="Current clicked genome " + matrix[y_index][0])
+
+
 def clicked():
+    global matrix
     file = filedialog.askopenfilename()
 
     with open(file) as tsv:
         reader = csv.reader(tsv, dialect="excel-tab")
-        lines = list(reader)
-        probes = lines[0]
-        classes = lines[1]
-
-        image_width = len(classes) - 1
-        image_height = len(lines) - 2
+        matrix = list(reader)
+        image_width = len(matrix[0]) - 1
+        image_height = len(matrix) - 2
         img = np.zeros((image_height, image_width, 3), np.uint8)
         for i in range(2, image_height):
-            row = lines[i]
+            row = list(matrix[i])
             del row[0]
             row = list(map(float, row))
             dev = stat.stdev(row)
@@ -42,15 +51,17 @@ def clicked():
             left_range = mean - 4 * dev
             right_range = mean + 4 * dev
             for j in range(1, image_width):
-                img[i, j] = calculate_heat_map_color(row[j], left_range, right_range)
+                img[i - 2, j - 1] = calculate_heat_map_color(row[j], left_range, right_range)
 
-        resized = cv2.resize(img, (image_width * 4, image_height * 4), interpolation=cv2.INTER_AREA)
+        resized = cv2.resize(img, (image_width * multiplication_factor, image_height * multiplication_factor),
+                             interpolation=cv2.INTER_AREA)
         image = Image.fromarray(resized)
         window.image = image = ImageTk.PhotoImage(image)
 
-        label = Label(frame, image=image)
-        label.pack(side="bottom", fill="both", expand="yes")
-        label.image = image
+        image_label = Label(frame, image=image)
+        image_label.pack(side="bottom", fill="both", expand="yes")
+        image_label.bind("<Button>", mouse_click)
+        image_label.image = image
 
 
 def on_frame_configured(canvas):
@@ -72,8 +83,13 @@ canvas.create_window((4,4), window=frame, anchor="nw")
 
 frame.bind("<Configure>", lambda event, canvas=canvas: on_frame_configured(canvas))
 
-menu = Menu(frame)
+probe_label = Label(frame, text="Current clicked probe")
+probe_label.pack(side="right", anchor="ne", padx=(10, 0), pady=(10, 0))
 
+genome_label = Label(frame, text="Current clicked genome")
+genome_label.pack(side="right", anchor="ne", padx=(10, 0), pady=(10, 0))
+
+menu = Menu(frame)
 choose_file = Menu(menu, tearoff=0)
 choose_file.add_command(label='Choose file', command=clicked)
 menu.add_cascade(label='File', menu=choose_file)
