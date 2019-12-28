@@ -28,8 +28,14 @@ def calculate_heat_map_color(value, left_range, right_range):
 def mouse_click(event):
     x_index = math.ceil(event.x / multiplication_factor)
     y_index = math.ceil(event.y / multiplication_factor)
-    probe_label.configure(text="Current clicked probe " + matrix[0][x_index])
-    genome_label.configure(text="Current clicked genome " + matrix[y_index][0])
+    probe_label.configure(text="Current clicked probe: " + matrix[0][x_index])
+    genome_label.configure(text="Current clicked genome: " + matrix[y_index][0])
+
+
+def pack_labels():
+    probe_label.pack(anchor="nw", padx=(10, 0), pady=(10, 0))
+    genome_label.pack(anchor="nw", padx=(10, 0), pady=(10, 0))
+    image_label.pack(side="bottom", fill="both", expand="yes", pady=(10, 0))
 
 
 def clicked():
@@ -58,10 +64,10 @@ def clicked():
         image = Image.fromarray(resized)
         window.image = image = ImageTk.PhotoImage(image)
 
-        image_label = Label(frame, image=image)
-        image_label.pack(side="bottom", fill="both", expand="yes")
+        image_label.configure(image=image)
         image_label.bind("<Button>", mouse_click)
         image_label.image = image
+        pack_labels()
 
 
 def on_frame_configured(canvas):
@@ -82,16 +88,13 @@ canvas.pack(side="top", fill="both", expand=True)
 canvas.create_window((4,4), window=frame, anchor="nw")
 
 frame.bind("<Configure>", lambda event, canvas=canvas: on_frame_configured(canvas))
-
-probe_label = Label(frame, text="Current clicked probe")
-probe_label.pack(side="right", anchor="ne", padx=(10, 0), pady=(10, 0))
-
-genome_label = Label(frame, text="Current clicked genome")
-genome_label.pack(side="right", anchor="ne", padx=(10, 0), pady=(10, 0))
+probe_label = Label(frame, text="Current clicked probe: ")
+genome_label = Label(frame, text="Current clicked genome: ")
+image_label = Label(frame)
 
 menu = Menu(frame)
 choose_file = Menu(menu, tearoff=0)
-choose_file.add_command(label='Choose file', command=clicked)
+choose_file.add_command(label='Load', command=clicked)
 menu.add_cascade(label='File', menu=choose_file)
 
 window.config(menu=menu)
