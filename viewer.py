@@ -5,18 +5,19 @@ import csv
 from PIL import ImageTk, Image
 import cv2
 import numpy as np
+import statistics as stat
 
 
-def calculate_heat_map_color(value, max, min):
+def calculate_heat_map_color(value, left_range, right_range):
     green_pixel_value = 0
     red_pixel_value = 0
 
-    position = (value - min) / (max - min)
+    position = (value - left_range) / (right_range - left_range)
     pixel_positon = position * 510
-    if pixel_positon > 255:
-        green_pixel_value = pixel_positon - 255
-    elif pixel_positon < 255:
-        red_pixel_value = pixel_positon
+    if pixel_positon < 255:
+        green_pixel_value = 255 - pixel_positon
+    elif pixel_positon > 255:
+        red_pixel_value = pixel_positon - 255
     return int(red_pixel_value), int(green_pixel_value), 0
 
 
@@ -35,13 +36,18 @@ def clicked():
         for i in range(2, image_height):
             row = lines[i]
             del row[0]
+            row = list(map(float, row))
+            dev = stat.stdev(row)
+            mean = stat.mean(row)
+            left_range = mean - 4 * dev
+            right_range = mean + 4 * dev
             for j in range(1, image_width):
-                row = list(map(float, row))
-                img[i, j] = calculate_heat_map_color(row[j], max(row), min(row))
+                img[i, j] = calculate_heat_map_color(row[j], left_range, right_range)
 
         resized = cv2.resize(img, (image_width * 4, image_height * 4), interpolation=cv2.INTER_AREA)
         image = Image.fromarray(resized)
         window.image = image = ImageTk.PhotoImage(image)
+
         label = Label(frame, image=image)
         label.pack(side="bottom", fill="both", expand="yes")
         label.image = image
