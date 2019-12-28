@@ -70,29 +70,29 @@ def clicked():
         pack_labels()
 
 
-def on_frame_configured(canvas):
-    canvas.configure(scrollregion=canvas.bbox("all"))
-
-
 window = Tk()
 window.title("Micro Matrices Viewer")
 window.geometry('500x500')
 
 canvas = Canvas(window, borderwidth=0, background="#ffffff")
-frame = Frame(canvas, background="#ffffff")
+image_frame = Frame(canvas, background="#ffffff")
+
+info_frame = Frame(window)
+info_frame.pack()
+
 scroll_bar = Scrollbar(window, orient="vertical", command=canvas.yview)
 canvas.configure(yscrollcommand=scroll_bar.set)
 
 scroll_bar.pack(side="right", fill="both")
 canvas.pack(side="top", fill="both", expand=True)
-canvas.create_window((4,4), window=frame, anchor="nw")
+canvas.create_window((0,0), window=image_frame, anchor="nw")
 
-frame.bind("<Configure>", lambda event, canvas=canvas: on_frame_configured(canvas))
-probe_label = Label(frame, text="Current clicked probe: ")
-genome_label = Label(frame, text="Current clicked genome: ")
-image_label = Label(frame)
+image_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+probe_label = Label(info_frame, text="Current clicked probe: ")
+genome_label = Label(info_frame, text="Current clicked genome: ")
+image_label = Label(image_frame)
 
-menu = Menu(frame)
+menu = Menu(image_frame)
 choose_file = Menu(menu, tearoff=0)
 choose_file.add_command(label='Load', command=clicked)
 menu.add_cascade(label='File', menu=choose_file)
