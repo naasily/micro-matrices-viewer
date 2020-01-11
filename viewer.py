@@ -28,19 +28,22 @@ def calculate_heat_map_color(value, left_range, right_range):
 
 
 def mouse_click(event):
+    canvas = event.widget
+    x = canvas.canvasx(event.x)
+    y = canvas.canvasy(event.y)
+
     global canvas_horizontal_line_id
     global canvas_vertical_line_id
-    x_index = math.ceil(event.x / multiplication_factor)
-    y_index = math.ceil(event.y / multiplication_factor)
+    x_index = math.ceil(x / multiplication_factor)
+    y_index = math.ceil(y / multiplication_factor)
     probe_label.configure(text="Current clicked probe: " + matrix[0][x_index])
     genome_label.configure(text="Current clicked genome: " + matrix[y_index][0])
 
-    # todo how much image is scrolled, or get pixel click
     canvas.after(1, canvas.delete, canvas_horizontal_line_id)
     canvas.after(1, canvas.delete, canvas_vertical_line_id)
-    canvas_horizontal_line_id = canvas.create_line(0, event.y, (len(matrix[0]) - 1) * multiplication_factor,
-                                                   event.y, fill="red")
-    canvas_vertical_line_id = canvas.create_line(event.x, 0, event.x, (len(matrix) - 2) * multiplication_factor,
+    canvas_horizontal_line_id = canvas.create_line(0, y, (len(matrix[0]) - 1) * multiplication_factor,
+                                                   y, fill="red")
+    canvas_vertical_line_id = canvas.create_line(x, 0, x, (len(matrix) - 2) * multiplication_factor,
                                                  fill="red")
 
 
@@ -96,7 +99,7 @@ def load_file():
         window.image = image = ImageTk.PhotoImage(image)
 
         canvas.create_image(image.width(), image.height(), image=image, anchor="se")
-        canvas.bind("<Button>", mouse_click)
+        canvas.bind("<Button-1>", mouse_click)
         create_classes_label(list(matrix[1]))
         pack_labels()
 
