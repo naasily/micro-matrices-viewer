@@ -12,6 +12,9 @@ matrix = np.zeros((2, 2, 3), np.uint8)
 multiplication_factor = 10
 canvas_horizontal_line_id = 0
 canvas_vertical_line_id = 0
+micro_matrix_image = np.zeros((2, 2, 3), np.uint8)
+current_y_position = 0
+canvas_image_id = 0
 
 
 def calculate_heat_map_color(value, left_range, right_range):
@@ -52,6 +55,8 @@ def pack_labels():
     genome_label.pack(padx=(10, 0), pady=(10, 0))
     class_label.pack(anchor="nw")
     image_label.pack(side="top", fill="both", expand="yes", pady=(10, 0))
+    top_arrow_label.pack(side="top")
+    down_arrow_label.pack(side="bottom")
 
 
 def create_classes_label(classes):
@@ -72,8 +77,27 @@ def create_classes_label(classes):
     class_label.configure(image=classes_image)
 
 
+def show_data():
+    draw_micro_matrix()
+    canvas.bind("<Button-1>", mouse_click)
+    create_classes_label(list(matrix[1]))
+    pack_labels()
+
+
+def draw_micro_matrix():
+    global micro_matrix_image
+    global current_y_position
+    global canvas_image_id
+    canvas.after(1, canvas.delete, canvas_image_id)
+    cropped_image = micro_matrix_image[current_y_position:400 + current_y_position, 0:len(micro_matrix_image[0])]
+    image = Image.fromarray(cropped_image)
+    window.image = image = ImageTk.PhotoImage(image)
+    canvas.create_image(image.width(), image.height(), image=image, anchor="se")
+
+
 def load_file():
     global matrix
+    global micro_matrix_image
     file = filedialog.askopenfilename()
 
     with open(file) as tsv:
@@ -93,15 +117,24 @@ def load_file():
             for j in range(1, image_width):
                 img[i - 2, j - 1] = calculate_heat_map_color(row[j], left_range, right_range)
 
-        resized = cv2.resize(img, (image_width * multiplication_factor, image_height * multiplication_factor),
+        micro_matrix_image = cv2.resize(img, (image_width * multiplication_factor, image_height * multiplication_factor),
                              interpolation=cv2.INTER_AREA)
-        image = Image.fromarray(resized)
-        window.image = image = ImageTk.PhotoImage(image)
+        show_data()
 
-        canvas.create_image(image.width(), image.height(), image=image, anchor="se")
-        canvas.bind("<Button-1>", mouse_click)
-        create_classes_label(list(matrix[1]))
-        pack_labels()
+
+def top_arrow_click():
+    global current_y_position
+    global multiplication_factor
+    if current_y_position > 0:
+        current_y_position = current_y_position - multiplication_factor
+        draw_micro_matrix()
+
+
+def down_arrow_click():
+    global current_y_position
+    if current_y_position < len(micro_matrix_image):
+        current_y_position = current_y_position + multiplication_factor
+        draw_micro_matrix()
 
 
 window = Tk()
@@ -114,18 +147,25 @@ image_frame = Frame(canvas, background="#ffffff")
 info_frame = Frame(window)
 info_frame.pack(anchor="nw")
 
-scroll_bar = Scrollbar(window, orient="vertical", command=canvas.yview)
-canvas.configure(yscrollcommand=scroll_bar.set)
+arrows_frame = Frame(window)
+arrows_frame.pack(side=RIGHT, fill=Y)
 
-scroll_bar.pack(side="right", fill="both")
+horizontal_scroll_bar = Scrollbar(window, orient="horizontal", command=canvas.xview)
+canvas.configure(xscrollcommand=horizontal_scroll_bar.set)
+horizontal_scroll_bar.pack(side="bottom", fill="both")
+
 canvas.pack(side="top", fill="both", expand=True)
 canvas.create_window((0, 0), window=image_frame, anchor="nw")
 
 image_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
 probe_label = Label(info_frame, text="Current clicked probe: ")
 genome_label = Label(info_frame, text="Current clicked genome: ")
 class_label = Label(info_frame)
+
 image_label = Label(image_frame)
+top_arrow_label = Button(arrows_frame, text="<", command=top_arrow_click)
+down_arrow_label = Button(arrows_frame, text=">", command=down_arrow_click)
 
 menu = Menu(image_frame)
 choose_file = Menu(menu, tearoff=0)
