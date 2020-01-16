@@ -54,7 +54,6 @@ def pack_labels():
     probe_label.pack(padx=(10, 0), pady=(10, 0))
     genome_label.pack(padx=(10, 0), pady=(10, 0))
     class_label.pack(anchor="nw")
-    image_label.pack(side="top", fill="both", expand="yes", pady=(10, 0))
     top_arrow_label.pack(side="top")
     down_arrow_label.pack(side="bottom")
 
@@ -163,9 +162,10 @@ probe_label = Label(info_frame, text="Current clicked probe: ")
 genome_label = Label(info_frame, text="Current clicked genome: ")
 class_label = Label(info_frame)
 
-image_label = Label(image_frame)
-top_arrow_label = Button(arrows_frame, text="<", command=top_arrow_click)
-down_arrow_label = Button(arrows_frame, text=">", command=down_arrow_click)
+top_arrow_image = PhotoImage(file="top_arrow.png")
+down_arrow_image = PhotoImage(file="down_arrow.png")
+top_arrow_label = Button(arrows_frame, image=top_arrow_image, command=top_arrow_click, height=20, width=10)
+down_arrow_label = Button(arrows_frame, image=down_arrow_image, command=down_arrow_click, height=20, width=10)
 
 menu = Menu(image_frame)
 choose_file = Menu(menu, tearoff=0)
